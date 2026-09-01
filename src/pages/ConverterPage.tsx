@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Header } from '../components/Landing/Header';
+import { Footer } from '../components/Landing/Footer';
 import { HinglishInput } from '../components/HinglishInput';
 import { UnicodeInput } from '../components/UnicodeInput';
 import { FontSelector } from '../components/FontSelector';
 import { OutputPanel } from '../components/OutputPanel';
 import { HistoryDrawer } from '../components/HistoryDrawer';
-import { AdSlot } from '../components/AdSlot';
 import type { FontId, HistoryEntry, ConversionOutput } from '../lib/types/index';
 import { FONT_LIST } from '../lib/types/index';
 import { encode } from '../lib/fontEncoders/index';
@@ -26,17 +27,17 @@ export function ConverterPage() {
 
   useGSAP(() => {
     gsap.from('.input-column', {
-      x: -50,
+      x: -40,
       opacity: 0,
-      duration: 0.8,
+      duration: 0.6,
       ease: 'power3.out',
     });
     gsap.from('.output-column', {
-      x: 50,
+      x: 40,
       opacity: 0,
-      duration: 0.8,
+      duration: 0.6,
       ease: 'power3.out',
-      delay: 0.2
+      delay: 0.1,
     });
   }, { scope: containerRef });
 
@@ -45,7 +46,7 @@ export function ConverterPage() {
 
   // ── Hinglish mode state ─────────────────────────────────────────────────
   const [hinglishText, setHinglishText] = useState('');
-  const [hinglishUnicode, setHinglishUnicode] = useState(''); // editable intermediate
+  const [hinglishUnicode, setHinglishUnicode] = useState('');
 
   // ── Unicode mode state ──────────────────────────────────────────────────
   const [unicodeText, setUnicodeText] = useState('');
@@ -53,7 +54,7 @@ export function ConverterPage() {
   // ── Font selection (persisted) ──────────────────────────────────────────
   const [selectedFonts, setSelectedFonts] = useLocalStorage<FontId[]>(
     'hindilekh-selected-fonts',
-    ['krutiDev']
+    ['krutiDev', 'devLys', 'chanakya', 'shusha']
   );
 
   // ── Conversion outputs ──────────────────────────────────────────────────
@@ -65,8 +66,7 @@ export function ConverterPage() {
   // ── History drawer ──────────────────────────────────────────────────────
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  // ── Debounce for large inputs ────────────────────────────────────────────
-  // The active unicode text to convert
+  // ── Active unicode text to convert ──────────────────────────────────────
   const activeUnicode = inputMode === 'hinglish' ? hinglishUnicode : unicodeText;
   const debouncedUnicode = useDebounce(activeUnicode, activeUnicode.length > 500 ? 100 : 0);
 
@@ -129,40 +129,18 @@ export function ConverterPage() {
     setOutputs([]);
   };
 
-  // ── Mode switch ──────────────────────────────────────────────────────────
   const switchMode = (mode: InputMode) => {
     setInputMode(mode);
-    // Don't clear text — keep each mode's input independent
   };
 
   const isEmpty = !activeUnicode.trim();
 
   return (
-    <div className="app-root" ref={containerRef}>
-      {/* ── Header ── */}
-      <header className="app-header glass-panel" style={{ borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderRadius: 0, borderBottom: '1px solid rgba(255,255,255,0.8)' }}>
-        <div className="header-inner">
-          <div className="header-brand">
-            <h1 className="brand-name" style={{ color: 'var(--magenta)' }}>हिंदी</h1>
-          </div>
+    <div className="converter-page-wrapper" ref={containerRef} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-page)' }}>
+      {/* Universal Header */}
+      <Header />
 
-          <div className="header-actions">
-            <button
-              id="history-btn"
-              className={`icon-btn ${historyOpen ? 'icon-btn--active' : ''}`}
-              onClick={() => setHistoryOpen(!historyOpen)}
-              title="Recent conversions"
-              aria-expanded={historyOpen}
-              aria-controls="history-drawer"
-            >
-              <span className="icon-btn-icon">🕐</span>
-              <span className="icon-btn-label">History</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* ── History Drawer ── */}
+      {/* History Drawer */}
       <HistoryDrawer
         isOpen={historyOpen}
         onClose={() => setHistoryOpen(false)}
@@ -171,37 +149,53 @@ export function ConverterPage() {
         onClearHistory={() => setHistory([])}
       />
 
-      {/* ── Main Content ── */}
-      <main className="app-main">
-        <div className="main-inner">
+      {/* Main Content */}
+      <main className="ht-container" style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
+        {/* Top Control bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 className="ht-h2" style={{ fontSize: '24px' }}>
+              Full <span className="cmyk-gradient-text">Studio Converter</span>
+            </h1>
+            <p className="ht-small">Type once in English or Unicode, copy simultaneously to any DTP legacy font.</p>
+          </div>
 
-          {/* ── Input Section ── */}
-          <section className="input-column">
-            <div className="section-card glass-panel" style={{ padding: '24px' }}>
-              {/* Mode tabs */}
-              <div className="mode-tabs" role="tablist" aria-label="Input mode">
+          <button
+            id="history-btn"
+            type="button"
+            className="ht-btn-secondary"
+            onClick={() => setHistoryOpen(!historyOpen)}
+            style={{ height: '36px', fontSize: '13px' }}
+          >
+            <span>🕐 Conversion History ({history.length})</span>
+          </button>
+        </div>
+
+        {/* 2-Column Converter Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', alignItems: 'start' }}>
+          {/* Input Column */}
+          <section className="input-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-card)', padding: '20px', boxShadow: 'var(--elevated-shadow)' }}>
+              {/* Mode Tabs */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
                 <button
-                  id="tab-hinglish"
-                  role="tab"
-                  aria-selected={inputMode === 'hinglish'}
-                  className={`mode-tab ${inputMode === 'hinglish' ? 'mode-tab--active' : ''}`}
+                  type="button"
+                  className={`ht-font-pill ${inputMode === 'hinglish' ? 'active' : ''}`}
                   onClick={() => switchMode('hinglish')}
                 >
-                  Hinglish / Phonetic
+                  ⚡ Hinglish / English Typing
                 </button>
                 <button
-                  id="tab-unicode"
-                  role="tab"
-                  aria-selected={inputMode === 'unicode'}
-                  className={`mode-tab ${inputMode === 'unicode' ? 'mode-tab--active' : ''}`}
+                  type="button"
+                  className={`ht-font-pill ${inputMode === 'unicode' ? 'active' : ''}`}
                   onClick={() => switchMode('unicode')}
                 >
-                  Unicode Hindi
+                  🇮🇳 Unicode / Mangal Hindi
                 </button>
               </div>
 
-              {/* Input area */}
-              <div className="tab-content" style={{ background: 'rgba(255,255,255,0.5)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--taupe)' }}>
+              {/* Input Area */}
+              <div style={{ minHeight: '160px' }}>
                 {inputMode === 'hinglish' ? (
                   <HinglishInput
                     value={hinglishText}
@@ -219,53 +213,55 @@ export function ConverterPage() {
                 )}
               </div>
 
-              {/* Font selector */}
-              <div className="font-selector-wrapper">
+              {/* Font Selector */}
+              <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+                <span className="ht-small" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+                  Select Target Legacy Fonts:
+                </span>
                 <FontSelector
                   selected={selectedFonts}
                   onChange={setSelectedFonts}
                 />
               </div>
 
-              {/* Global clear */}
+              {/* Global Clear */}
               {!isEmpty && (
-               <div className="global-clear-wrapper" style={{ marginTop: '16px' }}>
-                  <button className="global-clear-btn" onClick={handleClearAll} style={{ color: 'var(--magenta)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'monospace', fontWeight: 'bold' }}>
-                    ✕ Clear All
+                <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={handleClearAll}
+                    style={{ fontSize: '13px', color: 'var(--accent-magenta)', fontWeight: 600 }}
+                  >
+                    ✕ Clear All Text
                   </button>
                 </div>
               )}
             </div>
           </section>
 
-          {/* ── Signature Divider ── */}
-          <div className="main-divider" aria-hidden="true" style={{ background: 'var(--cyan)', opacity: 0.5, borderRadius: '2px' }} />
-
-          {/* ── Output Section ── */}
-          <section className="output-column">
-            <div className="output-section-header glass-panel" style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h2 className="output-section-title" style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--ink)' }}>
-                Font Output
-                {outputs.length > 0 && (
-                  <span className="output-count-badge" style={{ marginLeft: '12px', background: 'var(--cyan)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.9rem' }}>{outputs.length}</span>
-                )}
+          {/* Output Column */}
+          <section className="output-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h2 className="ht-h3">
+                Live Font Outputs ({outputs.length})
               </h2>
               {!isEmpty && outputs.length > 0 && (
-                <span className="output-ready-hint" style={{ color: 'var(--magenta)', fontWeight: 600, fontSize: '0.9rem' }}>✓ Ready to copy and paste</span>
+                <span className="ht-pill-badge" style={{ padding: '4px 10px', fontSize: '12px' }}>
+                  ✓ Ready for CorelDraw & DTP
+                </span>
               )}
             </div>
 
             {selectedFonts.length === 0 ? (
-              <div className="no-font-message glass-panel" style={{ padding: '32px', textAlign: 'center' }}>
-                <span className="no-font-icon" style={{ fontSize: '2rem' }}>🎯</span>
-                <p style={{ marginTop: '8px', color: 'var(--ink-muted)' }}>Select one or more fonts above to see output</p>
+              <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-card)', padding: '36px', textAlign: 'center' }}>
+                <p className="ht-body">Select at least one font above to generate legacy output.</p>
               </div>
             ) : (
-              <div className="output-panels">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {FONT_LIST.filter((f) => selectedFonts.includes(f.id)).map((font) => {
                   const output = outputs.find((o) => o.fontId === font.id);
                   return (
-                    <div key={font.id} className="glass-panel" style={{ marginBottom: '16px', overflow: 'hidden' }}>
+                    <div key={font.id} style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
                       <OutputPanel
                         font={font}
                         encodedText={output?.encodedText ?? ''}
@@ -281,15 +277,8 @@ export function ConverterPage() {
         </div>
       </main>
 
-      {/* ── Ad Banner ── */}
-      <div className="converter-ad-wrapper" style={{ margin: '2rem auto', textAlign: 'center', width: '100%', maxWidth: '1200px', padding: '0 2rem' }}>
-        <AdSlot slotName="footer" />
-      </div>
-
-      {/* ── Footer ── */}
-      <footer className="app-footer glass-panel" style={{ borderBottom: 'none', borderLeft: 'none', borderRight: 'none', borderRadius: 0, marginTop: 'auto' }}>
-        हिंदी — Designed for Indian graphic designers.
-      </footer>
+      {/* Universal Footer */}
+      <Footer />
     </div>
   );
 }

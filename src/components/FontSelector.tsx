@@ -20,37 +20,56 @@ export const FontSelector: React.FC<FontSelectorProps> = ({ selected, onChange }
   const clearAll = () => onChange([]);
 
   return (
-    <div className="font-selector">
-      <div className="font-selector-header">
-        <span className="font-selector-title">Output Fonts</span>
-        <div className="font-selector-actions">
-          <button className="link-btn" onClick={selectAll}>All</button>
-          <span className="sep">·</span>
-          <button className="link-btn" onClick={clearAll}>None</button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span className="ht-small" style={{ color: 'var(--text-secondary)' }}>
+          Click to enable/disable fonts for multi-output:
+        </span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="ht-small"
+            style={{ color: 'var(--accent-blue)', fontWeight: 600 }}
+            onClick={selectAll}
+          >
+            Select All
+          </button>
+          <span style={{ color: 'var(--border-subtle)' }}>|</span>
+          <button
+            type="button"
+            className="ht-small"
+            style={{ color: 'var(--text-tertiary)', fontWeight: 500 }}
+            onClick={clearAll}
+          >
+            Clear
+          </button>
         </div>
       </div>
 
-      <div className="font-chips">
+      <div className="ht-font-pills-row" style={{ marginTop: '2px' }}>
         {FONT_LIST.map((font) => {
           const isSelected = selected.includes(font.id);
           return (
             <button
               key={font.id}
               id={`font-chip-${font.id}`}
-              className={`font-chip ${isSelected ? 'font-chip--selected' : ''}`}
+              type="button"
+              className={`ht-font-pill ${isSelected ? 'active' : ''}`}
               onClick={() => toggle(font.id)}
               title={font.description}
             >
-              <span className="font-chip-check">{isSelected ? '✓' : ''}</span>
-              <span className="font-chip-name">{font.name}</span>
+              {isSelected ? '✓ ' : '+ '} {font.name}
             </button>
           );
         })}
       </div>
 
       {selected.length === 0 && (
-        <p className="font-selector-hint">Select at least one font to see output</p>
+        <p className="ht-small" style={{ color: 'var(--accent-magenta)', marginTop: '4px' }}>
+          ⚠️ Please select at least one font to generate output.
+        </p>
       )}
     </div>
   );
 };
+
