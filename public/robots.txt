@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://hindityping.pro/sitemap.xml
+Sitemap: https://hindityping.vercel.app/sitemap.xml
